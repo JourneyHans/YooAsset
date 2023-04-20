@@ -14,7 +14,7 @@ namespace YooAsset.Editor
 		[MenuItem("YooAsset/AssetBundle Collector", false, 101)]
 		public static void ShowExample()
 		{
-			AssetBundleCollectorWindow window = GetWindow<AssetBundleCollectorWindow>("资源包收集工具", true, EditorDefine.DockedWindowTypes);
+			AssetBundleCollectorWindow window = GetWindow<AssetBundleCollectorWindow>("资源包收集工具", true, WindowsDefine.DockedWindowTypes);
 			window.minSize = new Vector2(800, 600);
 		}
 
@@ -70,7 +70,7 @@ namespace YooAsset.Editor
 				VisualElement root = this.rootVisualElement;
 
 				// 加载布局文件
-				var visualAsset = EditorHelper.LoadWindowUXML<AssetBundleCollectorWindow>();
+				var visualAsset = UxmlLoader.LoadWindowUXML<AssetBundleCollectorWindow>();
 				if (visualAsset == null)
 					return;
 
@@ -148,6 +148,7 @@ namespace YooAsset.Editor
 					{
 						selectPackage.PackageName = evt.newValue;
 						AssetBundleCollectorSettingData.ModifyPackage(selectPackage);
+						FillPackageViewData();
 					}
 				});
 
@@ -160,6 +161,7 @@ namespace YooAsset.Editor
 					{
 						selectPackage.PackageDesc = evt.newValue;
 						AssetBundleCollectorSettingData.ModifyPackage(selectPackage);
+						FillPackageViewData();
 					}
 				});
 

@@ -87,7 +87,9 @@ namespace YooAsset
 				var editorSimulateModeImpl = new EditorSimulateModeImpl();
 				_bundleServices = editorSimulateModeImpl;
 				_playModeServices = editorSimulateModeImpl;
-				_assetSystemImpl.Initialize(PackageName, true, parameters.AssetLoadingMaxNumber, parameters.DecryptionServices, _bundleServices);
+				_assetSystemImpl.Initialize(PackageName, true,
+					parameters.LoadingMaxTimeSlice, parameters.DownloadFailedTryAgain,
+					parameters.DecryptionServices, _bundleServices);
 
 				var initializeParameters = parameters as EditorSimulateModeParameters;
 				initializeOperation = editorSimulateModeImpl.InitializeAsync(initializeParameters.LocationToLower, initializeParameters.SimulateManifestFilePath);
@@ -97,7 +99,9 @@ namespace YooAsset
 				var offlinePlayModeImpl = new OfflinePlayModeImpl();
 				_bundleServices = offlinePlayModeImpl;
 				_playModeServices = offlinePlayModeImpl;
-				_assetSystemImpl.Initialize(PackageName, false, parameters.AssetLoadingMaxNumber, parameters.DecryptionServices, _bundleServices);
+				_assetSystemImpl.Initialize(PackageName, false,
+					parameters.LoadingMaxTimeSlice, parameters.DownloadFailedTryAgain,
+					parameters.DecryptionServices, _bundleServices);
 
 				var initializeParameters = parameters as OfflinePlayModeParameters;
 				initializeOperation = offlinePlayModeImpl.InitializeAsync(PackageName, initializeParameters.LocationToLower);
@@ -107,7 +111,9 @@ namespace YooAsset
 				var hostPlayModeImpl = new HostPlayModeImpl();
 				_bundleServices = hostPlayModeImpl;
 				_playModeServices = hostPlayModeImpl;
-				_assetSystemImpl.Initialize(PackageName, false, parameters.AssetLoadingMaxNumber, parameters.DecryptionServices, _bundleServices);
+				_assetSystemImpl.Initialize(PackageName, false,
+					parameters.LoadingMaxTimeSlice, parameters.DownloadFailedTryAgain,
+					parameters.DecryptionServices, _bundleServices);
 
 				var initializeParameters = parameters as HostPlayModeParameters;
 				initializeOperation = hostPlayModeImpl.InitializeAsync(
@@ -182,10 +188,15 @@ namespace YooAsset
 				throw new NotImplementedException();
 
 			// 检测参数范围
-			if (parameters.AssetLoadingMaxNumber < 1)
+			if (parameters.LoadingMaxTimeSlice < 10)
 			{
-				parameters.AssetLoadingMaxNumber = 1;
-				YooLogger.Warning($"{nameof(parameters.AssetLoadingMaxNumber)} minimum value is 1");
+				parameters.LoadingMaxTimeSlice = 10;
+				YooLogger.Warning($"{nameof(parameters.LoadingMaxTimeSlice)} minimum value is 10 milliseconds.");
+			}
+			if (parameters.DownloadFailedTryAgain < 1)
+			{
+				parameters.DownloadFailedTryAgain = 1;
+				YooLogger.Warning($"{nameof(parameters.DownloadFailedTryAgain)} minimum value is 1");
 			}
 		}
 		private void InitializeOperation_Completed(AsyncOperationBase op)
@@ -228,7 +239,7 @@ namespace YooAsset
 			DebugCheckInitialize();
 			return _playModeServices.PreDownloadContentAsync(packageVersion, timeout);
 		}
-		
+
 		/// <summary>
 		/// 清理包裹未使用的缓存文件
 		/// </summary>

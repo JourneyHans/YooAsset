@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace YooAsset
 {
-	internal class OfflinePlayModeImpl : IPlayModeServices, IBundleServices
+	internal class EditorSimulateModeImpl : IPlayModeServices, IBundleServices
 	{
 		private PackageManifest _activeManifest;
 		private bool _locationToLower;
@@ -12,10 +12,10 @@ namespace YooAsset
 		/// <summary>
 		/// 异步初始化
 		/// </summary>
-		public InitializationOperation InitializeAsync(string packageName, bool locationToLower)
+		public InitializationOperation InitializeAsync(bool locationToLower, string simulateManifestFilePath)
 		{
 			_locationToLower = locationToLower;
-			var operation = new OfflinePlayModeInitializationOperation(this, packageName);
+			var operation = new EditorSimulateModeInitializationOperation(this, simulateManifestFilePath);
 			OperationSystem.StartOperation(operation);
 			return operation;
 		}
@@ -33,30 +33,29 @@ namespace YooAsset
 				return _activeManifest;
 			}
 		}
-		public bool IsBuildinPackageBundle(PackageBundle packageBundle)
+		public void FlushManifestVersionFile() 
 		{
-			return true;
 		}
 
 		UpdatePackageVersionOperation IPlayModeServices.UpdatePackageVersionAsync(bool appendTimeTicks, int timeout)
 		{
-			var operation = new OfflinePlayModeUpdatePackageVersionOperation();
+			var operation = new EditorPlayModeUpdatePackageVersionOperation();
 			OperationSystem.StartOperation(operation);
 			return operation;
 		}
 		UpdatePackageManifestOperation IPlayModeServices.UpdatePackageManifestAsync(string packageVersion, int timeout)
 		{
-			var operation = new OfflinePlayModeUpdatePackageManifestOperation();
+			var operation = new EditorPlayModeUpdatePackageManifestOperation();
 			OperationSystem.StartOperation(operation);
 			return operation;
 		}
 		PreDownloadContentOperation IPlayModeServices.PreDownloadContentAsync(string packageVersion, int timeout)
 		{
-			var operation = new OfflinePlayModePreDownloadContentOperation();
+			var operation = new EditorPlayModePreDownloadContentOperation();
 			OperationSystem.StartOperation(operation);
 			return operation;
 		}
-
+		
 		ResourceDownloaderOperation IPlayModeServices.CreateResourceDownloaderByAll(int downloadingMaxNumber, int failedTryAgain, int timeout)
 		{
 			return ResourceDownloaderOperation.CreateEmptyDownloader(downloadingMaxNumber, failedTryAgain, timeout);
@@ -81,23 +80,13 @@ namespace YooAsset
 		#endregion
 
 		#region IBundleServices接口
-		private BundleInfo CreateBundleInfo(PackageBundle packageBundle)
+		private BundleInfo CreateBundleInfo(PackageBundle packageBundle, AssetInfo assetInfo)
 		{
 			if (packageBundle == null)
 				throw new Exception("Should never get here !");
 
-			// 查询沙盒资源
-			if (CacheSystem.IsCached(packageBundle.PackageName, packageBundle.CacheGUID))
-			{
-				BundleInfo bundleInfo = new BundleInfo(packageBundle, BundleInfo.ELoadMode.LoadFromCache);
-				return bundleInfo;
-			}
-
-			// 查询APP资源
-			{
-				BundleInfo bundleInfo = new BundleInfo(packageBundle, BundleInfo.ELoadMode.LoadFromStreaming);
-				return bundleInfo;
-			}
+			BundleInfo bundleInfo = new BundleInfo(packageBundle, BundleInfo.ELoadMode.LoadFromEditor, assetInfo.AssetPath);
+			return bundleInfo;
 		}
 		BundleInfo IBundleServices.GetBundleInfo(AssetInfo assetInfo)
 		{
@@ -106,7 +95,7 @@ namespace YooAsset
 
 			// 注意：如果清单里未找到资源包会抛出异常！
 			var packageBundle = _activeManifest.GetMainPackageBundle(assetInfo.AssetPath);
-			return CreateBundleInfo(packageBundle);
+			return CreateBundleInfo(packageBundle, assetInfo);
 		}
 		BundleInfo[] IBundleServices.GetAllDependBundleInfos(AssetInfo assetInfo)
 		{
@@ -118,7 +107,7 @@ namespace YooAsset
 			List<BundleInfo> result = new List<BundleInfo>(depends.Length);
 			foreach (var packageBundle in depends)
 			{
-				BundleInfo bundleInfo = CreateBundleInfo(packageBundle);
+				BundleInfo bundleInfo = CreateBundleInfo(packageBundle, assetInfo);
 				result.Add(bundleInfo);
 			}
 			return result.ToArray();
