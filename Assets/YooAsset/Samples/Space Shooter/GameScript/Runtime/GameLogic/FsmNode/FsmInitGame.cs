@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UniFramework.Pooling;
 using UniFramework.Window;
@@ -17,8 +18,9 @@ internal class FsmInitGame : IStateNode
 	}
 	void IStateNode.OnEnter()
 	{
-		UniSingleton.StartCoroutine(Prepare());
-	}
+		// UniSingleton.StartCoroutine(Prepare());
+        Prepare();
+    }
 	void IStateNode.OnUpdate()
 	{
 	}
@@ -26,10 +28,11 @@ internal class FsmInitGame : IStateNode
 	{
 	}
 
-	private IEnumerator Prepare()
+	private async void Prepare()
 	{
 		var handle = YooAssets.LoadAssetAsync<GameObject>("UICanvas");
-		yield return handle;
+		// yield return handle;
+        await handle.ToUniTask();
 		var canvas = handle.InstantiateSync();
 		var desktop = canvas.transform.Find("Desktop").gameObject;
 		GameObject.DontDestroyOnLoad(canvas);

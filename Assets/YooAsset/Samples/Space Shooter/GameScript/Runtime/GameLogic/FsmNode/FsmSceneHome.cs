@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UniFramework.Machine;
 using UniFramework.Window;
@@ -16,8 +17,8 @@ internal class FsmSceneHome : IStateNode
 	}
 	void IStateNode.OnEnter()
 	{
-		UniSingleton.StartCoroutine(Prepare());
-	}
+        Prepare();
+    }
 	void IStateNode.OnUpdate()
 	{
 	}
@@ -26,10 +27,9 @@ internal class FsmSceneHome : IStateNode
 		UniWindow.CloseWindow<UIHomeWindow>();
 	}
 
-	private IEnumerator Prepare()
-	{
-		yield return YooAssets.LoadSceneAsync("scene_home");	
-		yield return UniWindow.OpenWindowAsync<UIHomeWindow>("UIHome");
+	private async void Prepare() {
+        await YooAssets.LoadSceneAsync("scene_home").ToUniTask();
+        await UniWindow.OpenWindowAsync<UIHomeWindow>("UIHome");
 
 		// 释放资源
 		var package = YooAssets.GetPackage("DefaultPackage");
